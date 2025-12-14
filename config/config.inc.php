@@ -2,18 +2,59 @@
 
 $config = [];
 
-$dbUser = getenv('ROUNDCUBE_DB_USER') ?: '';
-$dbPass = getenv('ROUNDCUBE_DB_PASSWORD') ?: '';
-$dbHost = getenv('ROUNDCUBE_DB_HOST') ?: 'localhost';
-$dbName = getenv('ROUNDCUBE_DB_NAME') ?: 'roundcubemail';
+$databaseUrl = getenv('DATABASE_URL');
+$dbDsn = null;
 
-$config['db_dsnw'] = sprintf(
-    'pgsql://%s:%s@%s/%s',
-    rawurlencode($dbUser),
-    rawurlencode($dbPass),
-    $dbHost,
-    $dbName
-);
+if ($databaseUrl !== false && $databaseUrl !== '') {
+    $url = parse_url($databaseUrl);
+
+    if ($url !== false && isset($url['scheme'], $url['host'], $url['path'])) {
+        $scheme = $url['scheme'] === 'postgres' ? 'pgsql' : $url['scheme'];
+        $user = isset($url['user']) ? $url['user'] : '';
+        $pass = isset($url['pass']) ? $url['pass'] : '';
+        $host = $url['host'];
+
+        if (isset($url['port'])) {
+            $host .= ':' . $url['port'];
+        }
+
+        $name = ltrim($url['path'], '/');
+        $query = isset($url['query']) && $url['query'] !== '' ? '?' . $url['query'] : '';
+
+        $dbDsn = sprintf(
+            '%s://%s:%s@%s/%s%s',
+            $scheme,
+            rawurlencode($user),
+            rawurlencode($pass),
+            $host,
+            $name,
+            $query
+        );
+    }
+}
+
+if ($dbDsn === null) {
+    $dbUser = getenv('ROUNDCUBE_DB_USER') ?: '';
+    $dbPass = getenv('ROUNDCUBE_DB_PASSWORD') ?: '';
+    $dbHost = getenv('ROUNDCUBE_DB_HOST') ?: 'localhost';
+    $dbPort = getenv('ROUNDCUBE_DB_PORT');
+
+    if ($dbPort !== false && $dbPort !== '') {
+        $dbHost .= ':' . $dbPort;
+    }
+
+    $dbName = getenv('ROUNDCUBE_DB_NAME') ?: 'roundcubemail';
+
+    $dbDsn = sprintf(
+        'pgsql://%s:%s@%s/%s',
+        rawurlencode($dbUser),
+        rawurlencode($dbPass),
+        $dbHost,
+        $dbName
+    );
+}
+
+$config['db_dsnw'] = $dbDsn;
 
 $imapHost = getenv('ROUNDCUBE_DEFAULT_HOST') ?: 'localhost';
 $imapPort = getenv('ROUNDCUBE_DEFAULT_PORT') ?: '143';
@@ -41,4 +82,9 @@ if ($pluginsEnv !== false && $pluginsEnv !== '') {
 
 $config['skin'] = 'elastic';
 
-$config['enable_installer'] = true;
+$enableInstaller = getenv('ROUNDCUBE_ENABLE_INSTALLER');
+if ($enableInstaller !== false && $enableInstaller !== '') {
+    $config['enable_installer'] = $enableInstaller === '1';
+} else {
+    $config['enable_installer'] = false;
+}
