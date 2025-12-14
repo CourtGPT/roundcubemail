@@ -9,7 +9,11 @@ if ($databaseUrl !== false && $databaseUrl !== '') {
     $url = parse_url($databaseUrl);
 
     if ($url !== false && isset($url['scheme'], $url['host'], $url['path'])) {
-        $scheme = $url['scheme'] === 'postgres' ? 'pgsql' : $url['scheme'];
+        $scheme = $url['scheme'];
+
+        if ($scheme === 'postgres' || $scheme === 'postgresql') {
+            $scheme = 'pgsql';
+        }
         $user = isset($url['user']) ? $url['user'] : '';
         $pass = isset($url['pass']) ? $url['pass'] : '';
         $host = $url['host'];
