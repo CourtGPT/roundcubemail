@@ -92,3 +92,8 @@ if ($enableInstaller !== false && $enableInstaller !== '') {
 } else {
     $config['enable_installer'] = false;
 }
+
+$config['log_driver'] = 'stdout';
+$config['log_logins'] = true;
+$config['session_debug'] = true;
+$config['sql_debug'] = true;
