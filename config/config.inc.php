@@ -41,3 +41,4 @@ if ($pluginsEnv !== false && $pluginsEnv !== '') {
 
 $config['skin'] = 'elastic';
 
+$config['enable_installer'] = true;
